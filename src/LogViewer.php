@@ -51,13 +51,11 @@ class LogViewer extends Extension
      *
      * @param null $file
      */
-    public function __construct($file = null)
+    public function __construct($file = null, $dir = false)
     {
-        if (is_null($file)) {
-            $file = $this->getLastModifiedLog();
-        }
-
         $this->file = $file;
+
+        $this->dir = $dir;
 
         $this->getFilePath();
     }
@@ -71,13 +69,12 @@ class LogViewer extends Extension
      */
     public function getFilePath()
     {
-        if (!$this->filePath) {
-            $path = sprintf(storage_path('logs/%s'), $this->file);
+        if (!$this->filePath && $this->file) {
 
+            $path = sprintf(storage_path('logs' . DIRECTORY_SEPARATOR . $this->dir . DIRECTORY_SEPARATOR . $this->file), basename($this->file));
             if (!file_exists($path)) {
                 throw new \Exception('log not exists!');
             }
-
             $this->filePath = $path;
         }
 
@@ -103,13 +100,18 @@ class LogViewer extends Extension
      */
     public function getLogFiles($count = 20)
     {
-        $files = glob(storage_path('logs/*'));
-        $files = array_combine($files, array_map('filemtime', $files));
-        arsort($files);
+        if ($this->dir) {
+            $files = scandir(storage_path('logs' . DIRECTORY_SEPARATOR . $this->dir));
+        } else {
+            $files = scandir(storage_path('logs' . DIRECTORY_SEPARATOR));
+        }
 
-        $files = array_map('basename', array_keys($files));
+        $filesCollection = collect($files);
 
-        return array_slice($files, 0, $count);
+        $fileList = $filesCollection->reject(function ($value, $key) {
+            return in_array($value, ['.', '..', '.gitignore', '.DS_Store']);
+        })->all();
+        return array_slice($fileList, 0, $count);
     }
 
     /**
@@ -120,7 +122,6 @@ class LogViewer extends Extension
     public function getLastModifiedLog()
     {
         $logs = $this->getLogFiles();
-
         return current($logs);
     }
 
@@ -131,6 +132,11 @@ class LogViewer extends Extension
      */
     public function getPrevPageUrl()
     {
+
+        if (!$this->file) {
+            return false;
+        }
+
         if ($this->pageOffset['end'] >= $this->getFilesize() - 1) {
             return false;
         }
@@ -147,6 +153,11 @@ class LogViewer extends Extension
      */
     public function getNextPageUrl()
     {
+
+        if (!$this->file) {
+            return false;
+        }
+
         if ($this->pageOffset['start'] == 0) {
             return false;
         }
@@ -169,6 +180,10 @@ class LogViewer extends Extension
      */
     public function fetch($seek = 0, $lines = 20, $buffer = 4096)
     {
+        if (!$this->file) {
+            return [];
+        }
+
         $f = fopen($this->filePath, 'rb');
 
         if ($seek) {
@@ -348,5 +363,33 @@ TPL;
         rsort($parsed);
 
         return $parsed;
+    }
+
+    /**
+     * Parse dir and build array tree
+     *
+     * @param $dir
+     *
+     * @return array
+     */
+    public function dirToArray($dir)
+    {
+        $result = [];
+        $cdir = scandir($dir);
+
+        foreach ($cdir as $key => $value) {
+            if (!in_array($value, [".", "..", ".DS_Store", ".gitignore"])) {
+                if (is_dir($dir . DIRECTORY_SEPARATOR . $value)) {
+                    $fileDir = str_replace(storage_path('logs' . DIRECTORY_SEPARATOR), '', $dir . DIRECTORY_SEPARATOR . $value);
+                    $result[$value] = [
+                        'dir' => $fileDir,
+                        'values' => $this->dirToArray($dir . DIRECTORY_SEPARATOR . $value)
+                    ];
+                } else {
+                    $result[] = $value;
+                }
+            }
+        }
+        return $result;
     }
 }

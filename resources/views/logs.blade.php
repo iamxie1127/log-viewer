@@ -69,7 +69,64 @@
         });
     });
 
+    $.fn.extend({
+        treed: function (o) {
 
+        var openedClass = 'glyphicon-minus-sign';
+        var closedClass = 'glyphicon-plus-sign';
+
+        if (typeof o != 'undefined'){
+            if (typeof o.openedClass != 'undefined'){
+            openedClass = o.openedClass;
+            }
+            if (typeof o.closedClass != 'undefined'){
+            closedClass = o.closedClass;
+            }
+        };
+
+            //initialize each of the top levels
+            var tree = $(this);
+            tree.addClass("tree");
+            tree.find('li').has("ul").each(function () {
+                var branch = $(this); //li with children ul
+                branch.prepend("<i class='indicator glyphicon " + closedClass + "'></i>");
+                branch.addClass('branch');
+                branch.on('click', function (e) {
+                    if (this == e.target) {
+                        var icon = $(this).children('i:first');
+                        icon.toggleClass(openedClass + " " + closedClass);
+                        $(this).children().children().toggle();
+                    }
+                })
+                branch.children().children().toggle();
+            });
+            //fire event from the dynamically added icon
+        tree.find('.branch .indicator').each(function(){
+            $(this).on('click', function () {
+                $(this).closest('li').click();
+            });
+        });
+            //fire event to open branch if the li contains an anchor instead of text
+            tree.find('.branch>a').each(function () {
+                $(this).on('click', function (e) {
+                    $(this).closest('li').click();
+                    e.preventDefault();
+                });
+            });
+            //fire event to open branch if the li contains a button instead of text
+            tree.find('.branch>button').each(function () {
+                $(this).on('click', function (e) {
+                    $(this).closest('li').click();
+                    e.preventDefault();
+                });
+            });
+        }
+    });
+
+    // A $( document ).ready() block.
+    $( document ).ready(function() {
+        $('#tree1').treed({openedClass : 'glyphicon-folder-open', closedClass : 'glyphicon-folder-close'});
+    });
 </script>
 <div class="row">
 
@@ -150,11 +207,26 @@
                 <h3 class="box-title">Files</h3>
             </div>
             <div class="box-body no-padding">
-                <ul class="nav nav-pills nav-stacked">
-                    @foreach($logFiles as $logFile)
-                        <li @if($logFile == $fileName)class="active"@endif>
-                            <a href="{{ route('log-viewer-file', ['file' => $logFile]) }}"><i class="fa fa-{{ ($logFile == $fileName) ? 'folder-open' : 'folder' }}"></i>{{ $logFile }}</a>
-                        </li>
+                <ul id="tree1">
+                    @foreach($dirTree as $key => $file)
+                        @if(is_array($file))
+                            <li>
+                                <span>{{ $key }}<span>
+                                <ul>
+                                    @foreach($file['values'] as $key => $value)
+                                        @include('laravel-admin-logs::file-item', ['file' => $value, 'dir' => $file['dir'], 'key' => $key])
+                                    @endforeach
+                                </ul>
+                            </li>
+                        @else
+                            <li>
+                                @if(isset($dir))
+                                    <a href="{{ route('log-viewer-file', ['dir' => $dir, 'file' => $file]) }}">{{ $file }}</a>
+                                @else
+                                    <a href="{{ route('log-viewer-file', ['file' => $file]) }}">{{ $file }}</a>
+                                @endif
+                            </li>
+                        @endif
                     @endforeach
                 </ul>
             </div>
