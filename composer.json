@@ -1,14 +1,14 @@
 {
-    "name": "laravel-admin-ext/log-viewer",
+    "name": "iamxie1127/log-viewer",
     "description": "Log viewer for laravel",
     "type": "library",
     "keywords": ["laravel-admin", "log", "viewer"],
-    "homepage": "https://github.com/laravel-admin-extensions/log-viewer",
+    "homepage": "https://github.com/iamxie1127/log-viewer",
     "license": "MIT",
     "authors": [
         {
-            "name": "AlexG",
-            "email": "alexei.goja@introduct.tech"
+            "name": "JasonXie",
+            "email": "iamxie1127@gmail.com"
         }
     ],
     "require": {
