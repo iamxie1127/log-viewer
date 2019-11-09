@@ -142,7 +142,9 @@ class LogViewer extends Extension
         }
 
         return route('log-viewer-file', [
-            'file' => $this->file, 'offset' => $this->pageOffset['end'],
+            'dir' => $this->dir,
+            'file' => $this->file, 
+            'offset' => $this->pageOffset['end'],
         ]);
     }
 
@@ -163,7 +165,9 @@ class LogViewer extends Extension
         }
 
         return route('log-viewer-file', [
-            'file' => $this->file, 'offset' => -$this->pageOffset['start'],
+            'dir' => $this->dir,
+            'file' => $this->file,
+            'offset' => -$this->pageOffset['start'],
         ]);
     }
 

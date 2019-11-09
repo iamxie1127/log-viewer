@@ -20,15 +20,14 @@ class LogController extends Controller
 
         return Admin::content(function (Content $content) use ($file, $request, $dir) {
             $offset = $request->get('offset');
-
+            
             $viewer = new LogViewer($file, $dir);
-            $test = $viewer->dirToArray(storage_path('logs/'));
             $content->body(view('laravel-admin-logs::logs', [
                 'logs'      => $viewer->fetch($offset),
                 'logFiles'  => $viewer->getLogFiles(),
                 'fileName'  => $viewer->file,
                 'end'       => $viewer->getFilesize(),
-                'tailPath'  => route('log-viewer-tail', ['file' => $viewer->file]),
+                'tailPath'  => route('log-viewer-tail', ['file' => $viewer->file,'dir' => $dir]),
                 'prevUrl'   => $viewer->getPrevPageUrl(),
                 'nextUrl'   => $viewer->getNextPageUrl(),
                 'filePath'  => $viewer->getFilePath(),
